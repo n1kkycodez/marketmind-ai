@@ -94,7 +94,7 @@ if ticker:
     # TAB 3: COMPETITORS
     # -----------------------
     with tab3:
-        st.subheader("Competitors")
+        st.subheader("Competitor Analysis")
 
         competitors = {
             "AAPL": ["MSFT", "GOOGL", "AMZN"],
@@ -104,12 +104,41 @@ if ticker:
         }
 
         if ticker.upper() in competitors:
-            for comp in competitors[ticker.upper()]:
-                comp_data = yf.Ticker(comp).info
-                st.write(f"**{comp}** - {comp_data.get('currentPrice', 'N/A')}")
+
+            comparison_tickers = [ticker.upper()] + competitors[ticker.upper()]
+
+            chart = go.Figure()
+
+            for symbol in comparison_tickers:
+
+                stock_data = yf.Ticker(symbol)
+                hist = stock_data.history(period="6mo")
+
+                if not hist.empty:
+
+                    normalized = (
+                        hist["Close"] / hist["Close"].iloc[0]
+                    ) * 100
+
+                    chart.add_trace(
+                        go.Scatter(
+                            x=hist.index,
+                            y=normalized,
+                            mode="lines",
+                            name=symbol
+                        )
+                    )
+
+            chart.update_layout(
+                title="6-Month Relative Performance",
+                xaxis_title="Date",
+                yaxis_title="Performance Index (100 = Start)",
+            )
+
+            st.plotly_chart(chart, use_container_width=True)
+
         else:
             st.write("No competitor data available.")
-
     # -----------------------
     # TAB 4: INSIGHTS + AI EXPLANATION
     # -----------------------
